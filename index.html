@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estacionamiento Inteligente IoT</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2f; color: white; text-align: center; padding: 50px; }
+        h1 { color: #00d2ff; }
+        .estacionamiento { display: flex; justify-content: center; gap: 30px; margin-top: 50px; }
+        .cajon { 
+            width: 150px; height: 250px; 
+            border: 4px dashed white; border-radius: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: bold; transition: all 0.3s;
+        }
+        /* Colores dinámicos */
+        .libre { border-color: #00ff88; color: #00ff88; background-color: rgba(0, 255, 136, 0.1); }
+        .ocupado { border-color: #ff3366; color: #ff3366; background-color: rgba(255, 51, 102, 0.1); }
+        
+        .carro-emoji { font-size: 60px; margin-bottom: 15px; display: none; }
+        .ocupado .carro-emoji { display: block; } /* Solo muestra el carro si está ocupado */
+    </style>
+</head>
+<body>
+
+    <h1>🚗 Panel de Estacionamiento Inteligente 🚗</h1>
+    <p>Conectado a la Nube Distribuida (Wokwi ➔ Flask ➔ Pyro5)</p>
+
+    <div class="estacionamiento">
+        <div id="ui-cajon1" class="cajon libre">
+            <span class="carro-emoji">🚙</span>
+            Cajón 1<br><span id="txt-cajon1">Libre</span>
+        </div>
+        <div id="ui-cajon2" class="cajon libre">
+            <span class="carro-emoji">🚕</span>
+            Cajón 2<br><span id="txt-cajon2">Libre</span>
+        </div>
+        <div id="ui-cajon3" class="cajon libre">
+            <span class="carro-emoji">🚗</span>
+            Cajón 3<br><span id="txt-cajon3">Libre</span>
+        </div>
+    </div>
+
+    <script>
+        // LUNA: PON AQUÍ LA URL PÚBLICA DE TU FLASK EN RAILWAY
+        // Ejemplo: "https://mi-proyecto.up.railway.app/obtener-datos"
+        const API_URL = "https://TU_URL_PUBLICA_DE_FLASK_AQUI/obtener-datos";
+
+        async function checarEstacionamiento() {
+            try {
+                // Le preguntamos a Flask cómo están los cajones
+                const respuesta = await fetch(API_URL);
+                const datos = await respuesta.json();
+
+                // Función para cambiar colores de un cajón
+                const actualizarUI = (id, ocupado) => {
+                    const div = document.getElementById(`ui-${id}`);
+                    const txt = document.getElementById(`txt-${id}`);
+                    if (ocupado == 1) {
+                        div.className = "cajon ocupado";
+                        txt.innerText = "Ocupado";
+                    } else {
+                        div.className = "cajon libre";
+                        txt.innerText = "Libre";
+                    }
+                };
+
+                // Actualizamos los 3 cajones con los datos que llegaron del servidor
+                actualizarUI("cajon1", datos.cajon1);
+                actualizarUI("cajon2", datos.cajon2);
+                actualizarUI("cajon3", datos.cajon3);
+
+            } catch (error) {
+                console.error("Error conectando con la nube:", error);
+            }
+        }
+
+        // Ejecutar la función cada 2 segundos para ver los cambios en tiempo real
+        setInterval(checarEstacionamiento, 2000);
+        checarEstacionamiento(); // Correrla una vez al inicio
+    </script>
+
+</body>
+</html>
