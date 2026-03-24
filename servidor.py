@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # <-- LÍNEA AGREGADA: Importamos los permisos
 import Pyro5.api
 import os
 
 app = Flask(__name__)
+CORS(app)  # <-- LÍNEA AGREGADA: Activamos los permisos para que la página web pueda entrar
 
 # --- LUNA: PEGA AQUÍ EL DOMINIO .INTERNAL DE TU PYRO ---
 # Ejemplo: "smart-parking-central.railway.internal"
@@ -37,6 +39,22 @@ def recibir_estado():
     print("="*40 + "\n", flush=True)
     return jsonify({"mensaje": "Datos procesados por el sistema distribuido"}), 200
 
+@app.route('/obtener-datos', methods=['GET'])
+def obtener_datos():
+    try:
+        # Armamos el número del Gerente
+        uri = f"PYRO:estacionamiento.central@{HOST_INTERNO_PYRO}:{PUERTO_PYRO}"
+        servidor_central = Pyro5.api.Proxy(uri)
+        
+        # ¡Magia RMI! Le pedimos los datos directamente
+        estado_actual = servidor_central.consultar_estado()
+        
+        # Se los mandamos a la página web
+        return jsonify(estado_actual), 200
+    except Exception as e:
+        print(f"❌ Error consultando al Gerente: {e}", flush=True)
+        return jsonify({"error": "No se pudo conectar con el cerebro"}), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)  
+    app.run(host='0.0.0.0', port=port)
